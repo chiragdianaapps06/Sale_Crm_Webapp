@@ -10,4 +10,5 @@ def send_otp_via_email(email):
     otp=random.randint(100000,999999)
     message=f"OTP for account verification {otp}"
     email_from=settings.EMAIL_HOST
+    send_mail(subject,message,email_from,[email])
     return otp
