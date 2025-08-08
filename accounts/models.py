@@ -17,6 +17,9 @@ class CustomUser(AbsModel,AbstractUser):
     location=models.TextField()
     is_verified=models.BooleanField(default=False)
 
+    USERNAME_FIELD = 'email' 
+    REQUIRED_FIELDS = ['username']
+
     def __str__(self):
         return self.username or self.email
 
