@@ -2,6 +2,7 @@ from django.db import models
 from .choices import UserType
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from datetime import datetime
 
 class AbsModel(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
@@ -23,7 +24,7 @@ class CustomUser(AbsModel,AbstractUser):
     def __str__(self):
         return self.username or self.email
 
-class OtpStore(models.Model):
+class OtpStore(AbsModel):
     mail=models.EmailField(unique=True)
     otp=models.CharField(max_length=6)
     data=models.JSONField()
