@@ -13,8 +13,7 @@ from django.contrib.auth.hashers import make_password
 from .emails import send_otp_via_email
 from .models import OtpStore
 
-
-CustomUser = get_user_model()
+User = get_user_model()
 
 class UserRegister(APIView):
     def post(self,request):
@@ -101,12 +100,10 @@ class VerifyOTP(APIView):
             },status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
-
     '''
       View that handle user authentication using Jwt Authentication.
       User will send email and password
     '''
-
     def post(self,request):
 
         email = request.data.get('email')
@@ -117,8 +114,8 @@ class LoginView(APIView):
         print(email)
 
         try:
-            user = CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
             return Response({"message":"User does not exist", 'data':None},status=status.HTTP_404_NOT_FOUND)
 
 
@@ -135,18 +132,6 @@ class LoginView(APIView):
             'refresh_token': str(refresh_token),
             'email':user.email
         }, status=status.HTTP_200_OK)
-
-
-
-
-class ProtectedView(APIView):
-
-
-    '''Protected View for testing'''
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({"message": "You are authenticated"})
 
 
 
@@ -178,5 +163,18 @@ class LogoutView(APIView):
             return Response({"message": f"An error occurred: {str(e)}", "data": None}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-
+class DeleteUser(APIView):
+    permission_classes=[IsAuthenticated]
+    def delete(self,request):
+        try:
+            user=User.objects.get(id=request.user.id)
+            logging.info(f"User fetched successfully from db {user}")
+            user.delete()
+            logging.info("User deleted successfully.")
+            return Response({
+                "data":None
+            },status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "data":str(e)
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
