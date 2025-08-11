@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions,status
-from .serializers import RegisterSerializer,CreateUserSerializer
+from .serializers import RegisterSerializer,CreateUserSerializer,ForgetPasswordOtpSerializer
 from utils.logger import logging
 from django.contrib.auth.hashers import make_password
 from .emails import send_otp_via_email
@@ -53,53 +53,92 @@ class UserRegister(APIView):
         
 
 class VerifyOTP(APIView):
-    def post(self,request):
+    def post(self, request):
         try:
-            email=request.data['email']
-            otp=request.data['otp']
-            otp_temp=OtpStore.objects.get(mail=email)
-            
-            if not otp_temp.is_valid():
-                logging.warning("OTP Expired.")
-                return Response({
-                    "message":"OTP expired.",
-                    "data":None
-                },   status=status.HTTP_400_BAD_REQUEST)
-            
-            if otp_temp.otp!=otp:
-                logging.warning("OTP didn't match. try again")
-                return Response({
-                    "message":"OTP didn't match",
-                    "data":None
-                },
-                status=status.HTTP_400_BAD_REQUEST)
-            
-            
-            serializer=CreateUserSerializer(data=otp_temp.data)
-            if serializer.is_valid():
-                logging.info(f"serializer validated data: {serializer.validated_data}")
-                user=serializer.save()
-                logging.info(f"User created into database {user}")
-                otp_temp.delete()
-                logging.info("OTP entry deleted from the otpstore model")
-                refresh=RefreshToken.for_user(user)             #generate token manually for user
-                return Response({
-                    'data':{
-                        "access_token":str(refresh.access_token),
-                        'refresh_token':str(refresh)
-                    }
-                },status=status.HTTP_201_CREATED)
-            
-            return Response({
-                'data':serializer.errors
-            },
-            status=status.HTTP_400_BAD_REQUEST)
-            
-        except Exception as e:
-            return Response({
-                'data':str(e)
-            },status=status.HTTP_400_BAD_REQUEST)
+            email = request.data['email']
+            otp = request.data['otp']
+            password = request.data['password']
+            confirm_password = request.data['confirm_password']
 
+            # Fetch the OTP record for the email
+            otp_temp = OtpStore.objects.filter(mail=email).first()
+
+            # Check if OTP record exists
+            if not otp_temp:
+                logging.warning(f"No OTP record found for {email}")
+                return Response({
+                    "message": "No OTP record found for this email.",
+                    "data": None
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Verify OTP
+            if otp_temp.otp != otp:
+                logging.warning("OTP didn't match.")
+                return Response({
+                    "message": "OTP didn't match.",
+                    "data": None
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if OTP has expired
+            if not otp_temp.is_valid():
+                logging.warning("OTP expired.")
+                return Response({
+                    "message": "OTP expired.",
+                    "data": None
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate password and confirm password fields using ForgetPasswordOtpSerializer
+            register_serializer = ForgetPasswordOtpSerializer(data={'password': password, 'confirm_password': confirm_password})
+
+            if not register_serializer.is_valid():
+                logging.warning(f"Password validation failed: {register_serializer.errors}")
+                return Response({
+                    "message": "Password and confirm password don't match.",
+                    "data": register_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Now check if user exists, if not, create a new user
+            try:
+                user = CustomUser.objects.get(email=email)  # Try to fetch user
+                # If user exists, update password
+                user.password = make_password(password)  # Hash the new password
+                user.save()
+
+                logging.info(f"Password updated for {email}")
+                otp_temp.delete()  # Delete OTP record after successful password reset
+
+                return Response({
+                    "message": "Password updated successfully."
+                }, status=status.HTTP_200_OK)
+
+            except CustomUser.DoesNotExist:
+                # If user does not exist, create a new user
+                logging.info(f"User does not exist, creating new user for {email}")
+                serializer = CreateUserSerializer(data=otp_temp.data)
+
+                if serializer.is_valid():
+                    new_user = serializer.save()
+                    logging.info(f"New user created: {new_user}")
+                    otp_temp.delete()  # Delete OTP record after successful user creation
+
+                    refresh = RefreshToken.for_user(new_user)  # Generate token manually for new user
+                    return Response({
+                        'data': {
+                            "access_token": str(refresh.access_token),
+                            'refresh_token': str(refresh)
+                        }
+                    }, status=status.HTTP_201_CREATED)
+
+                return Response({
+                    "data": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            logging.error(f"Error occurred: {str(e)}")
+            return Response({
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+#
 class LoginView(APIView):
 
     '''
@@ -114,7 +153,7 @@ class LoginView(APIView):
 
         if not  email or not password:
             return Response({"message":"Pass correct email and password.", 'data':None},status=status.HTTP_400_BAD_REQUEST)
-        print(email)
+        logging.info(email)
 
         try:
             user = CustomUser.objects.get(email=email)
@@ -179,4 +218,36 @@ class LogoutView(APIView):
 
 
 
+      
 
+
+class SendOTPForgetPassword(APIView):
+    
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+
+            # Generate OTP and send it via email
+            otp = send_otp_via_email(email)
+
+            # Store OTP temporarily in OtpStore model
+            OtpStore.objects.update_or_create(
+                mail=email,
+                defaults={
+                        'otp': otp,
+                        'data':{
+                                'email':email
+                    }        
+                }
+            )
+            logging.info(f"OTP sent to {email}")
+
+            return Response({
+                'message': "OTP has been sent to your email."
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logging.error(f"Error occurred: {str(e)}")
+            return Response({
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
