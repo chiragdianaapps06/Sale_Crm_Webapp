@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'leads',
     'pipelines'
 
+
+
 ]
 
 MIDDLEWARE = [
