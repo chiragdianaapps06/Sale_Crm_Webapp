@@ -13,8 +13,9 @@ from django.contrib.auth.hashers import make_password
 from .emails import send_otp_via_email
 from .models import OtpStore
 
+from .models import CustomUser
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 class UserRegister(APIView):
     def post(self,request):
