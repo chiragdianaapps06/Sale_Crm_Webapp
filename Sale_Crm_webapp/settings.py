@@ -45,9 +45,13 @@ INSTALLED_APPS = [
     'accounts',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+<<<<<<< HEAD
     'accounts',
     'leads',
     'pipelines'
+=======
+    
+>>>>>>> fe4f3f5b91dc1b054bcc326b739d706fb77fa8ae
 
 ]
 
