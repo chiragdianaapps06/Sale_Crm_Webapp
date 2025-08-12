@@ -8,3 +8,4 @@ class Pipeline(AbsModel):
 class PipelineStages(AbsModel):
     stage=models.CharField(max_length=100)
     order=models.IntegerField()
+    pipeline=models.ForeignKey(Pipeline,on_delete=models.CASCADE)

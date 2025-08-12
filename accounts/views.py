@@ -13,7 +13,8 @@ from django.contrib.auth.hashers import make_password
 from .emails import send_otp_via_email
 from .models import OtpStore
 
-from accounts.models import CustomUser
+from .models import CustomUser
+
 User = get_user_model()
 
 class UserRegister(APIView):
@@ -139,12 +140,13 @@ class VerifyOTP(APIView):
                 "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
 class LoginView(APIView):
+
     '''
       View that handle user authentication using Jwt Authentication.
       User will send email and password
     '''
+
     def post(self,request):
 
         email = request.data.get('email')
@@ -155,8 +157,8 @@ class LoginView(APIView):
         logging.info(email)
 
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
             return Response({"message":"User does not exist", 'data':None},status=status.HTTP_404_NOT_FOUND)
 
 
@@ -173,6 +175,18 @@ class LoginView(APIView):
             'refresh_token': str(refresh_token),
             'email':user.email
         }, status=status.HTTP_200_OK)
+
+
+
+
+class ProtectedView(APIView):
+
+
+    '''Protected View for testing'''
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({"message": "You are authenticated"})
 
 
 
