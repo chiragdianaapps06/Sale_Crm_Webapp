@@ -3,3 +3,4 @@ from django.contrib.auth import get_user_model
 CustomUser = get_user_model()
 # Register your models here.
 admin.site.register(CustomUser)
+
