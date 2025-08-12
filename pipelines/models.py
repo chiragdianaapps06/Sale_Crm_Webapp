@@ -6,5 +6,7 @@ class Pipeline(AbsModel):
     is_active=models.BooleanField(default=False)
 
 class PipelineStages(AbsModel):
+
+    pipeline=models.ForeignKey(Pipeline,on_delete=models.CASCADE)
     stage=models.CharField(max_length=100)
     order=models.IntegerField()
