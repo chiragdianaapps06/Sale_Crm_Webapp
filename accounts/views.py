@@ -13,6 +13,7 @@ from django.contrib.auth.hashers import make_password
 from .emails import send_otp_via_email
 from .models import OtpStore
 
+from accounts.models import CustomUser
 User = get_user_model()
 
 class UserRegister(APIView):
@@ -138,116 +139,6 @@ class VerifyOTP(APIView):
                 "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-CustomUser = get_user_model()
-
-class VerifyOTP(APIView):
-    def post(self, request):
-        try:
-            email = request.data['email']
-            otp = request.data['otp']
-
-            # Optional: Only check for password fields if they're present
-            password = request.data.get('password', '')
-            confirm_password = request.data.get('confirm_password', '')
-
-            # Fetch the OTP record for the email
-            otp_temp = OtpStore.objects.filter(mail=email).first()
-
-            # Check if OTP record exists
-            if not otp_temp:
-                logging.warning(f"No OTP record found for {email}")
-                return Response({
-                    "message": "No OTP record found for this email.",
-                    "data": None
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            # Verify OTP
-            if otp_temp.otp != otp:
-                logging.warning("OTP didn't match.")
-                return Response({
-                    "message": "OTP didn't match.",
-                    "data": None
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Check if OTP has expired
-            if not otp_temp.is_valid():
-                logging.warning("OTP expired.")
-                return Response({
-                    "message": "OTP expired.",
-                    "data": None
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Handling Forgot Password (When password and confirm_password are provided)
-            if password and confirm_password:
-                # Validate password and confirm password fields using ForgetPasswordOtpSerializer
-                register_serializer = ForgetPasswordOtpSerializer(data={'password': password, 'confirm_password': confirm_password})
-
-                if not register_serializer.is_valid():
-                    logging.warning(f"Password validation failed: {register_serializer.errors}")
-                    return Response({
-                        "message": "Password and confirm password don't match.",
-                        "data": register_serializer.errors
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                # Now check if user exists
-                try:
-                    user = CustomUser.objects.get(email=email)  # Try to fetch user
-                    # If user exists, update password
-                    user.password = make_password(password)  # Hash the new password
-                    user.save()
-
-                    logging.info(f"Password updated for {email}")
-                    otp_temp.delete()  # Delete OTP record after successful password reset
-
-                    return Response({
-                        "message": "Password updated successfully."
-                    }, status=status.HTTP_200_OK)
-
-                except CustomUser.DoesNotExist:
-                    logging.warning(f"User with email {email} does not exist.")
-                    return Response({
-                        "message": "User not found.",
-                        "data": None
-                    }, status=status.HTTP_404_NOT_FOUND)
-
-            else:
-                # Handling Registration (Only email and OTP required)
-                try:
-                    # Create user for registration
-                    user = CustomUser.objects.get(email=email)  # Check if user already exists
-                    logging.warning(f"User with email {email} already exists. Skipping registration.")
-                    return Response({
-                        "message": "User already exists.",
-                        "data": None
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                except CustomUser.DoesNotExist:
-                    # If user does not exist, create a new user
-                    logging.info(f"User does not exist, creating new user for {email}")
-                    serializer = CreateUserSerializer(data=otp_temp.data)
-
-                    if serializer.is_valid():
-                        new_user = serializer.save()
-                        logging.info(f"New user created: {new_user}")
-                        otp_temp.delete()  # Delete OTP record after successful user creation
-
-                        refresh = RefreshToken.for_user(new_user)  # Generate token manually for new user
-                        return Response({
-                            'data': {
-                                "access_token": str(refresh.access_token),
-                                'refresh_token': str(refresh)
-                            }
-                        }, status=status.HTTP_201_CREATED)
-
-                    return Response({
-                        "data": serializer.errors
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-        except Exception as e:
-            logging.error(f"Error occurred: {str(e)}")
-            return Response({
-                "message": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
     '''
