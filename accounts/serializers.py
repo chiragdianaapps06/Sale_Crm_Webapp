@@ -4,7 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from utils.logger import logging
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-
+from utils.logger import logging
 User=get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -19,15 +19,14 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self,attrs):
         try:
-            print(attrs['password'])
-            print(attrs['confirm_password'])
+            logging.info(attrs['password'])
+            logging.info(attrs['confirm_password'])
             validate_password(attrs['password'])
-            print(validate_password(attrs['password']))
+            logging.info(validate_password(attrs['password']))
         except ValidationError as e:
             logging.error("Weak password: %s", e)
             raise ValidationError({"password": e.messages})
         if attrs['password']!=attrs['confirm_password']:
-            print("===")
             logging.error("password fields didn't match")
             raise ValidationError({"password":"password fields didn't match"})
 
@@ -78,15 +77,15 @@ class ForgetPasswordOtpSerializer(serializers.ModelSerializer):
 
     def validate(self,attrs):
         try:
-            print(attrs['password'])
-            print(attrs['confirm_password'])
+            logging.info(attrs['password'])
+            logging.info(attrs['confirm_password'])
             validate_password(attrs['password'])
-            print(validate_password(attrs['password']))
+            logging.info(validate_password(attrs['password']))
         except ValidationError as e:
             logging.error("Weak password: %s", e)
             raise ValidationError({"password": e.messages})
         if attrs['password']!=attrs['confirm_password']:
-            print("===")
+
             logging.error("password fields didn't match")
             raise ValidationError({"password":"password fields didn't match"})
 
