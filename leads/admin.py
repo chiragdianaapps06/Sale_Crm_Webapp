@@ -2,12 +2,19 @@ from django.contrib import admin
 from .models import Leads
 # Register your models here.
 
-# admin.site.register(Leads)
 
-@admin.register(Leads)
 class LeadsAdmin(admin.ModelAdmin):
-    list_display = ('title', 'status', 'assigned_to', 'assigned_from')
-    list_filter = ('status',)  # This creates filter sidebar for statuses
-    search_fields = ('title', 'email')
+    list_display=['title','email','assigned_from','assigned_to','status']
+    list_filter=['status']
+    def get_queryset(self,request):
+        qs=super().get_queryset(request)
+        # print(qs)
 
-# admin.site.register(Leads)
+        if request.user.is_superuser:
+            return qs
+        if request.user.user_type=='sale':
+            return qs.filter(assigned_to=request.user)
+        
+        return qs.none()
+
+admin.site.register(Leads,LeadsAdmin)
