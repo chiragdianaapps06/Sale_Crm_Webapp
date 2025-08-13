@@ -13,15 +13,9 @@ class AbsModel(models.Model):
 
 class CustomUser(AbsModel,AbstractUser):
     email=models.EmailField(unique=True)
-<<<<<<< HEAD
-    user_type=models.CharField(max_length=10,choices=UserType.choices,default=UserType.ref)
-    business_info=models.TextField(blank=True,null=True)
-    location=models.TextField(blank=True,null=True)
-=======
     user_type=models.CharField(max_length=10,choices=UserType.choices,default=UserType.sale)
     business_info=models.TextField(null=True, blank=True)
     location=models.TextField(null=True,blank=True)
->>>>>>> 6d5b41ede1aa5c23f66872cae3a874c338ca0d1a
     is_verified=models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email' 
