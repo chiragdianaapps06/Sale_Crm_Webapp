@@ -2,6 +2,10 @@ from django.contrib import admin
 from .models import Leads
 from django.contrib.auth import get_user_model
 User = get_user_model()
+from utils.logger import logging
+from django.contrib.auth import get_user_model
+from accounts.choices import UserType
+User=get_user_model()
 
 class AssignedFromFilter(admin.SimpleListFilter):
     title = 'assigned from'
@@ -63,6 +67,7 @@ class LeadsAdmin(admin.ModelAdmin):
         return qs.none()
     
     
+
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         # Customizing filter choices in admin
