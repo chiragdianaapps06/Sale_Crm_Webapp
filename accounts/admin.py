@@ -6,13 +6,13 @@ from django.contrib.auth.admin import UserAdmin
 CustomUser = get_user_model()
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'is_staff', 'is_superuser')
+    list_display = ('username', 'email', 'is_staff', 'is_superuser','user_type')
 
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'password1', 'password2', 'brand', 'is_staff', 'is_superuser'),
+            'fields': ('username', 'email', 'password1', 'password2','is_staff', 'is_superuser','user_type'),
         }),
     )
 
