@@ -8,7 +8,8 @@ CustomUser = get_user_model()
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'is_staff', 'is_superuser','user_type')
 
-
+    
+    readonly_fields = ('email','date_joined','last_login')
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
