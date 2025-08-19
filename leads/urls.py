@@ -1,0 +1,13 @@
+from django.urls import path, include
+from .views import LeadsViewSet
+# viewtask = {
+#     'get': 'list',
+#     'post':'create'
+# }
+urlpatterns = [
+    path('leads/list/',LeadsViewSet.as_view({'get':'list'}),name="list-lead"),
+    path('leads/create/',LeadsViewSet.as_view({'post':'create'}),name='create-lead'),
+    path('leads/<int:pk>/update/',LeadsViewSet.as_view({'patch':'update'}),name='update-lead'),
+    path('leads/<int:pk>/delete/',LeadsViewSet.as_view({'delete':'destroy'}), name='lead-delete'),
+
+]

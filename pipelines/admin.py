@@ -1,8 +1,12 @@
 from django.contrib import admin
-from .models import Pipeline
+from .models import Pipeline,PipelineStatus
 
 
 
-admin.site.register(Pipeline)
+class PipelineAdmin(admin.ModelAdmin):
+    list_display = ['name','user']
+
+admin.site.register(Pipeline,PipelineAdmin)
+admin.site.register(PipelineStatus)
 
 

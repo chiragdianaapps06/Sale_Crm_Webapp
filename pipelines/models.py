@@ -13,7 +13,7 @@ class Pipeline(AbsModel):
 
 class PipelineStatus(AbsModel):
     pipeline_name=models.ForeignKey(Pipeline,on_delete=models.CASCADE)
-    stage=models.CharField(max_length=100,choices=PipelineStages.choices,default=PipelineStages.closed,null=True)
+    stage=models.CharField(max_length=100,choices=PipelineStages.choices,default=PipelineStages.new,null=True)
 
     def __str__(self):
         return f"{self.stage}"
