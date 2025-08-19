@@ -10,6 +10,7 @@ CustomUser = get_user_model()
 
 class CustomUserAdmin(UserAdmin):
 
+
     list_display = ('username', 'email', 'is_staff', 'is_superuser')
     readonly_fields=['username','email','last_login','date_joined']
     def get_readonly_fields(self, request, obj = None):
@@ -48,6 +49,7 @@ class CustomUserAdmin(UserAdmin):
             return new_fieldsets
 
         return fieldsets
+
 
     add_fieldsets = (
         (None, {
