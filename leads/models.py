@@ -11,3 +11,8 @@ class Leads(AbsModel):
 
     class Meta:
         verbose_name_plural = "Leads"
+
+
+# class ReferrerModel(AbsModel):
+#     sale_person = models.ForeignKey('accounts.CustomUser',related_name='sale_person',on_delete=models.CASCADE,limit_choices_to={'user_type':'sale'})
+#     referrer_person = models.ManyToManyField('account.CustomUser',related_name='referrer',on_delete=models.CASCADE,limit_choices_to={'user_type':'ref'})
