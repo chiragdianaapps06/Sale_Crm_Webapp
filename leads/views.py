@@ -2,9 +2,8 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Leads
-from .serializers import LeadSerializer
+from .serializers import LeadSerializer,ReferrerDashboardSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import serializers
 from pipelines.choices import PipelineStages
 from pipelines.models import Pipeline, PipelineStatus
 
@@ -30,89 +29,29 @@ class LeadsViewSet(viewsets.ModelViewSet):
             return Leads.objects.filter(assigned_from=user)
         return Leads.objects.none()
 
-    # def create(self, request, *args, **kwargs):
-    #     # Extract pipeline name from the request data
-    #     pipeline_name = request.data.get('pipeline_name')
-    #     stage_name = request.data.get('status')
-    #     if stage_name not in PipelineStages.values:
-    #         return Response({"message": "Invalid stage provided."}, status=status.HTTP_400_BAD_REQUEST)
 
-
-    #     if pipeline_name:
-    #         # Get or create the pipeline based on the pipeline_name and user
-    #         pipeline_obj, created = Pipeline.objects.get_or_create(name=pipeline_name, user=request.user)
-            
-    #         # Get or create the status based on the pipeline object
-    #         # status_obj, created = PipelineStatus.objects.get_or_create(pipeline_name=pipeline_obj, stage=request.data.get("status"))
-    #         status_obj,created = PipelineStatus.objects.get_or_create(pipeline_name=pipeline_obj, stage=request.data.get("status"))
-            
-    #         if not status_obj:
-    #             return Response({"message": "No status available for this pipeline."}, status=status.HTTP_400_BAD_REQUEST)
-            
-    #         # Add the status to the request data
-    #         request_data = request.data.copy()  # Make a mutable copy of request data
-    #         request_data['status'] = status_obj.id
-
-    #     # Assign the lead to the correct user based on the role of the logged-in user
-    #     user = request.user
-       
-
-    #     if user.user_type == 'sale':
-    #         # Sale person should be assigned as "assigned_to"
-    #         request_data['assigned_to'] = user.id
-
-    #         if Leads.objects.filter(assigned_from=request.data.get('assigned_from'), title=request_data.get('title')).exists():
-    #             return Response({
-    #                 "message": f"Lead already assigned by this referrer.",
-    #                 "data": None
-    #             }, status=status.HTTP_400_BAD_REQUEST)
-        
-    #     elif user.user_type == 'referrer':
-    #         # Referrer should be assigned as "assigned_from"
-    #         request_data['assigned_from'] = user.id
-
-    #         if Leads.objects.filter(assigned_to=request.data.get('assigned_to'), title=request.data.get('title')).exists():
-    #             return Response({
-    #                 "message": f"Lead already assigned to this salesperson.",
-    #                 "data": None
-    #             }, status=status.HTTP_400_BAD_REQUEST)
-            
-    #     # Now save the lead
-    #     serializer = LeadSerializer(data=request_data)
-        
-    #     if serializer.is_valid():
-    #         lead = serializer.save()
-    #         return Response({
-    #             "message": "Lead created successfully.",
-    #             "data": serializer.data
-    #         }, status=status.HTTP_201_CREATED)
-        
-    #     return Response({
-    #         "message": "Failed to create lead.",
-    #         "errors": serializer.errors
-    #     }, status=status.HTTP_400_BAD_REQUEST)
     
     def create(self, request, *args, **kwargs):
         # Extract pipeline name and stage from the request data
         pipeline_name = request.data.get('pipeline_name')
         stage_name = request.data.get('status')
-
-        if stage_name not in PipelineStages.values:
-            return Response({"message": "Invalid stage provided."}, status=status.HTTP_400_BAD_REQUEST)
-
-
-        if not pipeline_name:
-            return Response({"message": "Pipeline name is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not stage_name:
-            return Response({"message": "Stage is required."}, status=status.HTTP_400_BAD_REQUEST)
+        logging.info(f"pipeline stages are {PipelineStages.values}")
+        # if stage_name not in PipelineStages.values:
+        #     return Response({"message": "Invalid stage provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Validate pipeline
-        pipeline_obj = Pipeline.objects.filter(name=pipeline_name, user=request.user).first()
-
-        if not pipeline_obj:
-            # If pipeline doesn't exist, create a new one and associate it with the user
-            pipeline_obj = Pipeline.objects.create(name=pipeline_name, user=request.user)
+        try:
+            pipeline_obj = Pipeline.objects.get(name=pipeline_name, user=request.user)
+            logging.info(f"pipeline object {pipeline_obj}")
+        except Exception as e:
+            return Response({
+                "message":"Pipeline not found",
+                "data":str(e)
+            },status=status.HTTP_404_NOT_FOUND)
+        
+        #status values for the given project
+        status_values=pipeline_obj.pipelinestatus_set.all()
+        logging.info(f"status values are {status_values}")
 
         # Get or create the PipelineStatus for the given pipeline and stage
         status_obj = PipelineStatus.objects.filter(pipeline_name=pipeline_obj, stage=stage_name).first()
@@ -307,3 +246,12 @@ class ReferrerAllSalePersonViewSet(viewsets.ModelViewSet):
             "message": "Salespeople and their associated leads retrieved successfully.",
             "data": salesperson_data
         }, status=status.HTTP_200_OK)
+    
+
+class ReferrerDashboardViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        serializer = ReferrerDashboardSerializer(request.user)
+        return Response({"status": 200, "message": "Success", "data": serializer.data})
+

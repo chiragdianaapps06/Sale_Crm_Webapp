@@ -331,9 +331,24 @@ class ReferrerViewSet(viewsets.ModelViewSet):
     serializer_class = ReferrerSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    
+
     def get_queryset(self):
-        # Sales person sees only their own referrers
-        return User.objects.filter(user_type="ref", created_by=self.request.user)
+        user = self.request.user
+        if user.user_type == "sale":
+            # Sales person can see only their own referrers
+            return User.objects.filter(user_type="ref", created_by=user)
+        elif user.is_superuser:
+            # Superuser can see all referrers
+            return User.objects.filter(user_type="ref")
+        else:
+            # Referrers should not see others
+            return User.objects.none()
 
     def perform_create(self, serializer):
+        if self.request.user.user_type != "sale" and not self.request.user.is_superuser:
+            return Response({
+                "message":"permission denied",
+                "data":None
+            },status=status.HTTP_403_FORBIDDEN)
         serializer.save()

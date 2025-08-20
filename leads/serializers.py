@@ -36,7 +36,6 @@ class LeadSerializer(serializers.ModelSerializer):
 
     def get_referrers(self, obj):
         # Fetch all referrers for the given lead
-
         return obj.assigned_from.username 
     
     def validate(self, attrs):
@@ -48,3 +47,17 @@ class LeadSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("No status found for this pipeline.")
             attrs['status'] = status  # Set default status from the pipeline
         return attrs
+    
+
+
+
+class ReferrerDashboardSerializer(serializers.ModelSerializer):
+    sales_persons = serializers.SerializerMethodField()
+    leads = LeadSerializer(many=True, source="leads_referrar")
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "sales_persons", "leads"]
+
+    def get_sales_persons(self, obj):
+        return [{"id": obj.created_by.id, "username": obj.created_by.username}] if obj.created_by else []
