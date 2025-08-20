@@ -16,7 +16,6 @@ class PipelineAdmin(admin.ModelAdmin):
             return qs.filter(user=request.user)
         return qs.none()
 
-
 admin.site.register(Pipeline,PipelineAdmin)
 admin.site.register(PipelineStatus)
 
