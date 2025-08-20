@@ -7,12 +7,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions,status
-from .serializers import RegisterSerializer,CreateUserSerializer,ForgetPasswordOtpSerializer
+from .serializers import RegisterSerializer,CreateUserSerializer,ForgetPasswordOtpSerializer,UserSerializer
 from utils.logger import logging
 from django.contrib.auth.hashers import make_password
 from .emails import send_otp_via_email
 from .models import OtpStore
-
+from rest_framework import viewsets
 from .models import CustomUser
 
 User = get_user_model()
@@ -293,3 +293,36 @@ class SendOTPForgetPassword(APIView):
                 'message': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+class ReferrerDetailView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self,request,id):
+        try:
+            user=User.objects.get(id=id)
+            serializer=UserSerializer(user)
+
+            if user.user_type=='ref':
+                return Response({
+                    "data":serializer.data,
+                    
+                },status=status.HTTP_200_OK)
+            return Response({
+                "data":None,
+                "message":"User is not type of referrer"
+            },status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "message":"error",
+                "data":str(e)
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+
+class ReferrerViewSet(viewsets.ModelViewSet):
+    permission_classes=[IsAuthenticated]
+    serializer_class=UserSerializer
+    queryset=User.objects.all()
+
+    

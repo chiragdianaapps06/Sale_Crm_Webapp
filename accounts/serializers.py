@@ -90,3 +90,9 @@ class ForgetPasswordOtpSerializer(serializers.ModelSerializer):
             raise ValidationError({"password":"password fields didn't match"})
 
         return attrs
+    
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=["email","username","business_info","location","is_verified"]

@@ -3,7 +3,6 @@ from accounts.models import AbsModel
 from .choices import PipelineStages
 
 #actual pipeline model
-
 class Pipeline(AbsModel):
     name=models.CharField(max_length=100)
     user=models.ForeignKey('accounts.CustomUser',on_delete=models.CASCADE)
