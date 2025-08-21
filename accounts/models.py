@@ -17,7 +17,8 @@ class CustomUser(AbsModel,AbstractUser):
     business_info=models.TextField(null=True, blank=True)
     location=models.TextField(null=True,blank=True)
     is_verified=models.BooleanField(default=False)
-
+    created_by = models.ForeignKey("self",    null=True,    blank=True,    on_delete=models.SET_NULL,    related_name="referrers")
+    
     USERNAME_FIELD = 'email' 
     REQUIRED_FIELDS = ['username']
 

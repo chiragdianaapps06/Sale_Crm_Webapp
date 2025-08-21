@@ -5,6 +5,9 @@ from utils.logger import logging
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from utils.logger import logging
+from utils.generate_password import random_password_generator
+from .emails import send_account_credentials
+
 User=get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -96,3 +99,41 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields=["email","username","business_info","location","is_verified"]
+
+
+
+
+class ReferrerSerializer(serializers.ModelSerializer):
+    business_info = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    business_info = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "created_by","business_info","location"]
+        read_only_fields = ["id", "username", "created_by"]
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        sales_person = request.user  
+
+        # Generate random username + password
+        username = validated_data["email"].split('@')[0]
+        random_password = random_password_generator()
+        logging.info(f'Random password for the user is {random_password}')
+        referrer = User.objects.create_user(
+            username=username,
+            email=validated_data["email"],
+            password=random_password,
+            user_type="ref",
+            created_by=sales_person
+        )
+
+        # Send credentials via email
+        send_account_credentials(
+            subject="Your Referrer Account Credentials",
+            username=username,
+            password=random_password,
+            user_email=[validated_data["email"]],
+        )
+
+        return referrer

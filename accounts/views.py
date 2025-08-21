@@ -14,6 +14,7 @@ from .emails import send_otp_via_email
 from .models import OtpStore
 from rest_framework import viewsets
 from .models import CustomUser
+from .serializers import ReferrerSerializer
 
 User = get_user_model()
 
@@ -320,9 +321,19 @@ class ReferrerDetailView(APIView):
 
 
 
-class ReferrerViewSet(viewsets.ModelViewSet):
-    permission_classes=[IsAuthenticated]
-    serializer_class=UserSerializer
-    queryset=User.objects.all()
+# class ReferrerViewSet(viewsets.ModelViewSet):
+#     permission_classes=[IsAuthenticated]
+#     serializer_class=UserSerializer
+#     queryset=User.objects.all()
 
-    
+
+class ReferrerViewSet(viewsets.ModelViewSet):
+    serializer_class = ReferrerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Sales person sees only their own referrers
+        return User.objects.filter(user_type="ref", created_by=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save()
