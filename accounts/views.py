@@ -16,6 +16,7 @@ from rest_framework import viewsets
 from .models import CustomUser
 from .serializers import ReferrerSerializer
 
+
 User = get_user_model()
 
 class UserRegister(APIView):
