@@ -5,20 +5,20 @@ from django.contrib.auth import get_user_model\
 
 User = get_user_model()
 
-# class LeadSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Leads
-#         fields = ['id','title', 'email', 'description', 'assigned_from', 'assigned_to', 'status']
+class LeadSerializer1(serializers.ModelSerializer):
+    class Meta:
+        model = Leads
+        fields = ['id','title', 'email', 'description', 'assigned_from', 'assigned_to','lead_pipeline', 'status']
 
-#     def validate(self, attrs):
+    def validate(self, attrs):
       
-#         pipeline_name = attrs.get('pipeline_name')
-#         if pipeline_name:
-#             status = PipelineStatus.objects.filter(pipeline_name=pipeline_name).first()
-#             if not status:
-#                 raise serializers.ValidationError("No status found for this pipeline.")
-#             attrs['status'] = status  # Set default status from the pipeline
-#         return attrs
+        pipeline_name = attrs.get('pipeline_name')
+        if pipeline_name:
+            status = PipelineStatus.objects.filter(pipeline_name=pipeline_name).first()
+            if not status:
+                raise serializers.ValidationError("No status found for this pipeline.")
+            attrs['status'] = status  # Set default status from the pipeline
+        return attrs
 
 
 

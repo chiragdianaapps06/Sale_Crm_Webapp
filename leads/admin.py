@@ -1,5 +1,4 @@
 from django.contrib import admin
-from leads.forms import LeadForm
 from .models import Leads
 from django.contrib.auth import get_user_model
 User = get_user_model()
