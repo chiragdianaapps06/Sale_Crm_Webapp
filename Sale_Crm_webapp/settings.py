@@ -131,7 +131,6 @@ AUTH_USER_MODEL='accounts.CustomUser'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -165,7 +164,14 @@ REST_FRAMEWORK = {
         'utils.renderers.CustomRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+
 }
 
+STATIC_URL = '/static/'
 
+# For development, this should be correct for Django to serve the files
+STATICFILES_DIRS = [BASE_DIR / "leads/static"]
+
+# If collecting static files, make sure you also have this
+# STATIC_ROOT = BASE_DIR / "staticfiles"
 

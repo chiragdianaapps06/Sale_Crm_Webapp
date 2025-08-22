@@ -255,3 +255,14 @@ class ReferrerDashboardViewSet(viewsets.ViewSet):
         serializer = ReferrerDashboardSerializer(request.user)
         return Response({"status": 200, "message": "Success", "data": serializer.data})
 
+from django.http import JsonResponse
+# from .models import PipelineStatus
+
+def get_stages(request):
+    pipeline_id = request.GET.get('pipeline_id')
+    stages = []
+    if pipeline_id:
+        stages = list(PipelineStatus.objects.filter(pipeline_name_id=pipeline_id).values('id', 'name'))
+
+    print(stages)
+    return JsonResponse(stages, safe=False)

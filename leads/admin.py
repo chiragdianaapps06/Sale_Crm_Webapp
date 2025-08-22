@@ -1,23 +1,37 @@
 from django.contrib import admin
+from leads.forms import LeadForm
 from .models import Leads
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from utils.logger import logging
 from accounts.choices import UserType
-
-from django import forms
 from pipelines.models import PipelineStatus , Pipeline
 
+
+# Custom Admin filter for 'Assigned From' (Referrer)
 class AssignedFromFilter(admin.SimpleListFilter):
-    title = 'assigned from'
+    title = 'Assigned from'
     parameter_name = 'assigned_from'
 
     def lookups(self, request, model_admin):
-        # For superusers and sale: all referrer users
-        if request.user.is_superuser or request.user.user_type == 'sale':
+        if request.user.is_superuser:
             referrers = User.objects.filter(user_type='ref')
             return [(user.pk, str(user)) for user in referrers]
-        # For referrer: only themselves
+        elif request.user.user_type == 'sale':
+            # Only referrers assigned to this salesperson or created by them
+            referrers = User.objects.filter(
+                user_type='ref',
+                leads_referrar__assigned_to=request.user
+            ).distinct()
+
+            referrers_created_by_salesperson = User.objects.filter(
+                created_by=request.user,
+                user_type='ref'
+            ).distinct()
+
+            # Combine both sets
+            referrers = referrers.union(referrers_created_by_salesperson)
+            return [(user.pk, str(user)) for user in referrers]
         elif request.user.user_type == 'ref':
             return [(request.user.pk, str(request.user))]
         return []
@@ -27,101 +41,47 @@ class AssignedFromFilter(admin.SimpleListFilter):
             return queryset.filter(assigned_from__pk=self.value())
         return queryset
 
-# Custom admin filter for assigned_to
+# Custom Admin filter for 'Assigned To' (Salesperson)
 class AssignedToFilter(admin.SimpleListFilter):
-    title = 'assigned to'
+    title = 'Assigned to'
     parameter_name = 'assigned_to'
 
     def lookups(self, request, model_admin):
-        # For superuser: all salespeople
         if request.user.is_superuser:
-            sales = User.objects.filter(user_type='sale')
-            return [(user.pk, str(user)) for user in sales]
-        # For sale: only themselves
+            salespeople = User.objects.filter(user_type='sale')
+            return [(user.pk, str(user)) for user in salespeople]
         elif request.user.user_type == 'sale':
             return [(request.user.pk, str(request.user))]
-        # For referrer: all salespeople
         elif request.user.user_type == 'ref':
-            sales = User.objects.filter(user_type='sale')
-            return [(user.pk, str(user)) for user in sales]
+            salespeople = User.objects.filter(
+                user_type='sale', 
+                leads_sales__assigned_from=request.user
+            ).distinct()
+
+            salespeople_created_by_referrer = User.objects.filter(
+                created_by=request.user,
+                user_type='sale'
+            ).distinct()
+
+            salespeople = salespeople.union(salespeople_created_by_referrer)
+            return [(user.pk, str(user)) for user in salespeople]
         return []
 
     def queryset(self, request, queryset):
         if self.value():
             return queryset.filter(assigned_to__pk=self.value())
-#         return queryset
-# class LeadsAdminForm(forms.ModelForm):
-#     class Meta:
-#         model = Leads
-#         fields = '__all__'
-
-#     def __init__(self, *args, **kwargs):
-#         super(LeadsAdminForm, self).__init__(*args, **kwargs)
-#         # If we have a pipeline selected, filter available pipeline statuses
-#         if 'pipeline_name' in self.initial:
-#             pipeline = self.initial['pipeline_name']
-#             self.fields['status'].queryset = PipelineStatus.objects.filter(pipeline_name=pipeline)
-
-#     # Dynamically update available status based on selected pipeline
-#     def clean(self):
-#         cleaned_data = super().clean()
-#         pipeline = cleaned_data.get("pipeline_name")
-#         if pipeline:
-#             cleaned_data['status'] = PipelineStatus.objects.filter(pipeline_name=pipeline).first()  # Get default status or first status
-#         return cleaned_data
-
-
-
-from django import forms
-# from .models import Leads, PipelineStaged, Pipelines
-class LeadsAdminForm(forms.ModelForm):
-    pipeline = forms.ModelChoiceField(
-        queryset=Pipeline.objects.all(),
-        required=False,
-        label="Pipeline"
-    )
-
-    class Meta:
-        model = Leads
-        fields = ['title', 'email', 'assigned_from', 'assigned_to','pipeline', 'status']  # Explicit field order
-
-    def __init__(self, *args, **kwargs):
-        super(LeadsAdminForm, self).__init__(*args, **kwargs)
-
-        # Ensure the 'status' field exists before trying to filter its queryset
-        if 'status' in self.fields:
-            # Initially set queryset for the 'status' field to none
-            self.fields['status'].queryset = PipelineStatus.objects.none()
-
-            # If a 'pipeline' is passed to the form, filter the 'status' field accordingly
-            if 'pipeline' in self.initial:
-                pipeline = self.initial['pipeline']
-                self.fields['status'].queryset = PipelineStatus.objects.filter(pipeline_name=pipeline)
-
-            # If a 'pipeline' is selected in the form during `POST`, filter 'status' based on that
-            if 'pipeline' in self.data:
-                pipeline_id = self.data.get('pipeline')
-                if pipeline_id:
-                    pipeline = Pipeline.objects.get(id=pipeline_id)
-                    self.fields['status'].queryset = PipelineStatus.objects.filter(pipeline_name=pipeline)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        pipeline = cleaned_data.get("pipeline")
-        status = cleaned_data.get("status")
-
-        # If pipeline is selected, filter status based on pipeline
-        if pipeline:
-            cleaned_data['status'] = PipelineStatus.objects.filter(pipeline_name=pipeline).first()  # Default to first status for pipeline
-        
-        return cleaned_data
-
+        return queryset
 
 
 class LeadsAdmin(admin.ModelAdmin):
-    form = LeadsAdminForm
-    list_display = ['title', 'email', 'assigned_from', 'assigned_to', 'status']  # Don't display pipeline_name
-    
+   
+    list_display = ['title', 'email', 'description', 'assigned_from', 'assigned_to', 'lead_pipeline', 'status']
+    # list_filter = [AssignedFromFilter,AssignedToFilter]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        kwargs['queryset'] = PipelineStatus.objects.none()        
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
@@ -132,8 +92,16 @@ class LeadsAdmin(admin.ModelAdmin):
             return qs.filter(assigned_from=request.user)
         return qs.none()
 
+    def get_list_filter(self, request):
+        if request.user.is_authenticated and request.user.is_superuser:
+            return [AssignedFromFilter, AssignedToFilter]
+        elif request.user.is_authenticated and request.user.user_type == 'sale':
+            return [AssignedFromFilter]
+        elif request.user.is_authenticated and request.user.user_type == 'ref':
+            return [AssignedToFilter]
+
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        # Custom filter for foreign key fields
         if db_field.name == 'assigned_from':
             if request.user.is_superuser or request.user.user_type == 'sale':
                 kwargs['queryset'] = User.objects.filter(user_type='ref')
@@ -148,14 +116,12 @@ class LeadsAdmin(admin.ModelAdmin):
             elif request.user.user_type == 'ref':
                 kwargs['queryset'] = User.objects.filter(user_type='sale')
 
-        if db_field.name == 'status':
-            pipeline = request.GET.get('pipeline_name')  # Get pipeline from query params
-            if pipeline:
-                kwargs['queryset'] = PipelineStatus.objects.filter(pipeline_name=pipeline)
-            else:
-                kwargs['queryset'] = PipelineStatus.objects.none()  # If no pipeline, no status options
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
+    
+    class Media:
+        js = ('admin/js/lead_admin.js',)
 
 admin.site.register(Leads, LeadsAdmin)
+
+
