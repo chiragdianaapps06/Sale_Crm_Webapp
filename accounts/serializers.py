@@ -7,7 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from utils.logger import logging
 from utils.generate_password import random_password_generator
 from .emails import send_account_credentials
-
+import random
 User=get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
