@@ -15,6 +15,7 @@ from .models import OtpStore
 from rest_framework import viewsets
 from .models import CustomUser
 from .serializers import ReferrerSerializer
+import random
 import logging
 
 
@@ -69,7 +70,7 @@ class VerifyOTP(APIView):
 
             # Fetch the OTP record for the email
             otp_temp = OtpStore.objects.filter(mail=email).first()
-            print("------")
+            
             # Check if OTP record exists
             if not otp_temp:
                 logging.warning(f"No OTP record found for {email}")
@@ -93,7 +94,7 @@ class VerifyOTP(APIView):
                     "message": "OTP expired.",
                     "data": None
                 }, status=status.HTTP_400_BAD_REQUEST)
-            print("------")
+     
             # Case 1: If password and confirm_password are provided, it's a password reset process
             if password and confirm_password:
                 register_serializer = ForgetPasswordOtpSerializer(data={'password': password, 'confirm_password': confirm_password})
@@ -129,12 +130,12 @@ class VerifyOTP(APIView):
                 # Case 2: If password and confirm_password are NOT provided, this is the initial OTP verification for user creation
                 logging.info(f"OTP verified successfully for {email}")
 
-                print("------")
+        
 
                 # If user doesn't exist, create a new one (without requiring a password here)
                 try:
                     user = CustomUser.objects.get(email=email)
-                    print("------")
+  
                     return Response({
                         "message": "User already exists, you can now log in.",
                         "data": None
@@ -144,7 +145,6 @@ class VerifyOTP(APIView):
                     # User doesn't exist, create a new one
                     logging.info(f"Creating new user for {email}")
                     serializer = CreateUserSerializer(data=otp_temp.data)
-                    print("------")
 
                     if serializer.is_valid():
                         new_user = serializer.save()
