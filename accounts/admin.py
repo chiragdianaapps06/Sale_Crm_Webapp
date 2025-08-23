@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.admin import GroupAdmin
 from django import forms
 from leads.models import Leads
+from .models import UserDevice
 
 CustomUser = get_user_model()
 
@@ -151,3 +152,5 @@ class ReferrerGroupAdmin(GroupAdmin):
 # unregister default and register custom
 admin.site.unregister(Group)
 admin.site.register(Group, ReferrerGroupAdmin)
+
+admin.site.register(UserDevice)

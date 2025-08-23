@@ -33,3 +33,12 @@ class OtpStore(AbsModel):
 
     def is_valid(self):
         return self.updated_at>=timezone.now()-timezone.timedelta(minutes=15)
+    
+
+
+class UserDevice(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    device_token = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.user.username
