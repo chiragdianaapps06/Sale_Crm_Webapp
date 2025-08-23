@@ -133,7 +133,6 @@ AUTH_USER_MODEL='accounts.CustomUser'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -167,8 +166,35 @@ REST_FRAMEWORK = {
         'utils.renderers.CustomRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+
 }
+
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STATIC_URL = '/static/'
+
+# For development, this should be correct for Django to serve the files
+STATICFILES_DIRS = [BASE_DIR / "leads/static"]
+
+# If collecting static files, make sure you also have this
+# STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+
+import firebase_admin
+from firebase_admin import credentials
+
+# Construct the path to the Firebase service account file located in the static folder
+service_account_path = os.path.join(BASE_DIR, 'media', 'service-account-file.json')
+
+# Initialize Firebase with the dynamically constructed path
+cred = credentials.Certificate(service_account_path)
+
+# Initialize Firebase
+firebase_admin.initialize_app(cred)
+
+# Now you can use Firebase in your application
+
+MEDIA_URL = '/media/'

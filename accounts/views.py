@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions,status
 from .serializers import RegisterSerializer,CreateUserSerializer,ForgetPasswordOtpSerializer,UserSerializer
-from utils.logger import logging
+# from utils.logger import logging
 from django.contrib.auth.hashers import make_password
 from .emails import send_otp_via_email
 from .models import OtpStore
@@ -16,6 +16,10 @@ from rest_framework import viewsets
 from .models import CustomUser
 from .serializers import ReferrerSerializer
 import random
+import logging
+
+
+
 
 User = get_user_model()
 

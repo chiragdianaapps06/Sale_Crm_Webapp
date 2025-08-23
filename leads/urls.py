@@ -1,7 +1,7 @@
 from django.urls import path, include
 from .views import LeadsViewSet,SalesPersonAllReferrerViewSet,ReferrerAllSalePersonViewSet,ReferrerDashboardViewSet
 from rest_framework.routers import DefaultRouter
-
+from . import views
 # viewtask = {
 #     'get': 'list',
 #     'post':'create'
@@ -17,6 +17,8 @@ urlpatterns = [
     path('leads/sale-person/',SalesPersonAllReferrerViewSet.as_view({'get':'list'}), name='get-saleperson-referrer'),
     path('leads/referrer-person/',ReferrerAllSalePersonViewSet.as_view({'get':'list'}), name='get-referrer-saleperson'),
     path('',include(router.urls)),
+
+    path('get-stages/', views.get_stages, name='get_stages'),
 
 ]
 
