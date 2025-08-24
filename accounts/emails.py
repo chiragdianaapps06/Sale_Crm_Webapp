@@ -19,7 +19,6 @@ def send_account_credentials(user_email, username, password,subject):
     
     # Render plain text template
     message = render_to_string("emails/account_credentials.txt", {
-        "user_name": username,
         "username": username,
         "password": password,
     })

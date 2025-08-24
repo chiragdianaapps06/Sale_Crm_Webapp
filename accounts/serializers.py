@@ -22,8 +22,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self,attrs):
         try:
-            logging.info(attrs['password'])
-            logging.info(attrs['confirm_password'])
+           
             validate_password(attrs['password'])
             logging.info(validate_password(attrs['password']))
         except ValidationError as e:
@@ -35,17 +34,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return attrs
     
-
-    # def create(self,validated_data):
-    #     user=User(
-    #         email=validated_data['email'],
-    #         username=validated_data['email'].split('@')[0],
-    #         password=validated_data['password'],
-    #         is_verified=True
-    #     )
-
-    #     user.save()
-    #     return user
     
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -93,7 +81,11 @@ class ForgetPasswordOtpSerializer(serializers.ModelSerializer):
             raise ValidationError({"password":"password fields didn't match"})
 
         return attrs
-    
+
+    def update(self,instance,validated_data):
+        instance.set_password(validated_data['password'])
+        instance.save()
+        return instance
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
