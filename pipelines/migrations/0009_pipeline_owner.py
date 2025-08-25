@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='pipeline',
             name='owner',
-            field=models.ForeignKey(default=None, on_delete=django.db.models.deletion.CASCADE, related_name='own_pipeline', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(default=None, on_delete=django.db.models.deletion.CASCADE, related_name='own_pipeline', to=settings.AUTH_USER_MODEL, null=True),
             preserve_default=False,
         ),
     ]
