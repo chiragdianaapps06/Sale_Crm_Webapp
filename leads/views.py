@@ -114,6 +114,11 @@ class LeadsViewSet(viewsets.ModelViewSet):
         # Add the status to the request data
         request_data = request.data.copy()  # Make a mutable copy of request data
         logging.info( status_obj)
+
+        if pipeline_obj:
+            request_data['lead_pipeline'] = pipeline_obj.id
+        else:
+            request_data['lead_pipeline'] = None
         if status_obj:
             request_data['status'] = status_obj.id
         else:

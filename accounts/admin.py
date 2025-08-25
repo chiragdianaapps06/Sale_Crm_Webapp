@@ -55,28 +55,50 @@ class CustomUserAdmin(UserAdmin):
 
 
    
+    # def get_fieldsets(self, request, obj=None):
+    #     fieldsets = super().get_fieldsets(request, obj)
+    #     if obj:
+    #         fieldsets=super().get_fieldsets(request,obj)
+    #         modified=[]
+    #         for name,dict_ in fieldsets:
+    #             fields=dict_.get("fields",[])
+    #             if 'password' in fields:
+    #                 fields=tuple(f for f in fields if f!='password')
+    #             modified.append((name,{"fields":fields}))
+
+    #     if obj and obj == request.user and request.user.is_superuser:
+    #         # remove 'user_permissions' from all fieldsets
+    #         new_fieldsets = []
+    #         for name, opts in modified:
+    #             fields = opts.get('fields', [])
+    #             if 'user_permissions' in fields:
+    #                 fields = tuple(f for f in fields if f != 'user_permissions')
+    #             new_fieldsets.append((name, {**opts, 'fields': fields}))
+    #         return new_fieldsets
+
+    #     return fieldsets
+
+
     def get_fieldsets(self, request, obj=None):
-        fieldsets = super().get_fieldsets(request, obj)
-        if obj:
-            fieldsets=super().get_fieldsets(request,obj)
-            modified=[]
-            for name,dict_ in fieldsets:
-                fields=dict_.get("fields",[])
-                if 'password' in fields:
-                    fields=tuple(f for f in fields if f!='password')
-                modified.append((name,{"fields":fields}))
+            """
+            Hide restricted fields from Salesperson in the form.
+            """
+            fieldsets = super().get_fieldsets(request, obj)
+        
+            if request.user.is_superuser:
+                return fieldsets  
 
-        if obj and obj == request.user and request.user.is_superuser:
-            # remove 'user_permissions' from all fieldsets
-            new_fieldsets = []
-            for name, opts in modified:
-                fields = opts.get('fields', [])
-                if 'user_permissions' in fields:
-                    fields = tuple(f for f in fields if f != 'user_permissions')
-                new_fieldsets.append((name, {**opts, 'fields': fields}))
-            return new_fieldsets
-
-        return fieldsets
+            if request.user.user_type == "sale" and not request.user.is_superuser:
+                new_fieldsets = []
+                for name, opts in fieldsets:
+                    fields = list(opts.get("fields", []))
+                    # Remove restricted fields
+                    for f in ['is_superuser', 'groups', 'user_permissions', 'is_staff']:
+                        if f in fields:
+                            fields.remove(f)
+                    new_fieldsets.append((name, {**opts, "fields": fields}))
+                return new_fieldsets
+            return fieldsets
 
     def lead_id(self, obj):
         # Return the first lead ID associated with this user (referrer or salesperson)
@@ -104,6 +126,86 @@ class CustomUserAdmin(UserAdmin):
 
         }),
     )
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Restrict the creation of Referrer users by Salesperson in the Admin form.
+        """
+        form = super().get_form(request, obj, **kwargs)
+
+        if request.user.is_superuser:
+            return form
+
+        if request.user.user_type == 'sale':
+            # If logged-in user is a salesperson, only allow them to create Referrers
+            # Ensure 'user_type' is in the form fields
+            if 'user_type' in form.base_fields:
+                form.base_fields['user_type'].widget.choices = [(x[0], x[1]) for x in form.base_fields['user_type'].choices if x[0] == 'ref']
+
+        return form
+
+    # def save_model(self, request, obj, form, change):
+    #     """
+    #     Automatically set created_by = logged-in salesperson when creating a new Referrer.
+    #     """
+    #     if not change:  # Only when creating, not updating
+    #         if request.user.user_type == "sale" and obj.user_type == "ref":
+    #             obj.created_by = request.user
+    #     super().save_model(request, obj, form, change)
+
+    # def save_model(self, request, obj, form, change):
+    #     """
+    #     Restrict Salesperson so they can only create Referrers.
+    #     Also ensure they cannot elevate privileges.
+    #     """
+    #     if not request.user.is_superuser and request.user.user_type == "sale":
+    #         # Force restrictions
+    #         obj.is_superuser = False
+    #         obj.is_staff = True  # stays False by default unless superuser sets
+    #         obj.groups.clear()    # Remove group assignments
+
+    #         # Salesperson can only create Referrers
+    #         if not change:  # only when creating new
+    #             if obj.user_type != "ref":
+    #                 raise PermissionError("Salesperson can only create Referrers.")
+    #             obj.created_by = request.user  # auto-assign creator
+
+    #     super().save_model(request, obj, form, change)
+
+    def save_model(self, request, obj, form, change):
+        """
+        Automatically set created_by = logged-in salesperson when creating a new Referrer.
+        Restrict Salesperson so they cannot assign superuser/staff rights.
+        """
+        is_new = not change  
+
+        if is_new:
+            # Salesperson creating a Referrer
+            if request.user.is_superuser:
+                obj.created_by = request.user
+            elif request.user.user_type == "sale" and obj.user_type == "ref":
+                obj.created_by = request.user
+                obj.is_staff = True
+
+        # First save the object (important: must have an ID before assigning M2M)
+        super().save_model(request, obj, form, change)
+
+        # Now handle group assignment safely
+        if obj.user_type == "sale":
+            from django.contrib.auth.models import Group
+            try:
+                sale_group = Group.objects.get(name="sale-group")
+                user_group = Group.objects.get(name="User")
+                obj.groups.set([sale_group, user_group])  # assign both groups
+            except Group.DoesNotExist:
+                pass  # groups not found, skip
+        elif obj.user_type == "ref":
+            from django.contrib.auth.models import Group
+            try:
+                ref_group = Group.objects.get(name="referrer-group")
+                obj.groups.set([ref_group])
+            except Group.DoesNotExist:
+                pass
+
 
 
 admin.site.register(CustomUser,CustomUserAdmin)
