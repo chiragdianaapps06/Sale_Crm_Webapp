@@ -29,6 +29,7 @@ class UserRegister(APIView):
                 logging.info(f"data after validation {serializer.validated_data}")
                 password=make_password(serializer.validated_data['password'])           #hashes the password for security
                 otp=send_otp_via_email(serializer.data['email'])                        #generates an otp randomly
+                logging.info(f"otp generated was in the signn up api{otp}")
                 OtpStore.objects.update_or_create(mail=serializer.validated_data['email'],
                                                   defaults={
                                                       'otp':otp,
@@ -273,8 +274,6 @@ class ReferrerViewSet(viewsets.ModelViewSet):
     serializer_class = ReferrerSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    
-
     def get_queryset(self):
         user = self.request.user
         if user.user_type == "sale":
@@ -294,3 +293,10 @@ class ReferrerViewSet(viewsets.ModelViewSet):
                 "data":None
             },status=status.HTTP_403_FORBIDDEN)
         serializer.save()
+
+
+
+
+
+# Username: lokesh.saini501
+# Password: x6vR0QbL
