@@ -35,7 +35,8 @@ class UserRegister(APIView):
                                                       'otp':otp,
                                                       'data':{
                                                           'email':serializer.validated_data['email'],
-                                                          'password':password
+                                                          'password':password,
+                                                          'user_type':serializer.validated_data['user_type']
                                                       }
                                                   })
                 logging.info(f"temporary data stored into otpstore model to use in otp verification api")

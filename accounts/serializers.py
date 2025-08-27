@@ -8,6 +8,7 @@ from utils.logger import logging
 from utils.generate_password import random_password_generator
 from .emails import send_account_credentials
 from .helper import generate_qr
+from django.contrib.auth.models import Group
 User=get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -17,7 +18,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=User
-        fields=['email','password','confirm_password']
+        fields=['email','password','confirm_password','user_type']
 
 
     def validate(self,attrs):
@@ -41,19 +42,26 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=User
-        fields=['email','password']
+        fields=['email','password','user_type']
 
     def create(self,validated_data):
         user=User(
             email=validated_data['email'],
             username=validated_data['email'].split('@')[0],
             password=validated_data['password'],
+            user_type=validated_data['user_type'],
             is_verified=True,
+            is_staff=True
         )
             
         user.save()
         if user.user_type=="sale":
+            group=Group.objects.get(name='sale-group')
+            user.groups.add(group)
             generate_qr(user)
+        elif user.user_type=="ref":
+            group=Group.objects.get(name='referrer-group')
+            user.groups.add(group)
         
         return user
 
@@ -121,7 +129,10 @@ class ReferrerSerializer(serializers.ModelSerializer):
             password=random_password,
             user_type="ref",
             created_by=sales_person
+            
         )
+        group=Group.objects.get(name='referrer-group')
+        referrer.groups.add(group)
 
         # Send credentials via email
         send_account_credentials(
