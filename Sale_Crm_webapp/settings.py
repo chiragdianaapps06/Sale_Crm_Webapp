@@ -68,7 +68,7 @@ ROOT_URLCONF = 'Sale_Crm_webapp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "Sale_Crm_webapp" / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -176,11 +176,13 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STATIC_URL = '/static/'
 
 # For development, this should be correct for Django to serve the files
-STATICFILES_DIRS = [BASE_DIR / "leads/static"]
+# STATICFILES_DIRS = [BASE_DIR / "leads/static"]
 
 # If collecting static files, make sure you also have this
 # STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 
 import firebase_admin
@@ -198,3 +200,16 @@ firebase_admin.initialize_app(cred)
 # Now you can use Firebase in your application
 
 MEDIA_URL = '/media/'
+# STATIC_ROOT=os.path.join(BASE_DIR,'static')
+
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Jaidan",
+    "site_header": "Jaidan",
+    "welcome_sign": "Log in to Jaidan Admin",
+    "login_logo": "images/logo.png", 
+    "login_logo_dark": "images/logo.png",  
+}
+
+LOGIN_URL = "/admin/"

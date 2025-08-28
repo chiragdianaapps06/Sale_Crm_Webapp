@@ -7,6 +7,7 @@ from django.contrib.auth.admin import GroupAdmin
 from django import forms
 from leads.models import Leads
 from .models import UserDevice
+from Sale_Crm_webapp.admin import admin_site
 
 CustomUser = get_user_model()
 
@@ -52,31 +53,6 @@ class CustomUserAdmin(UserAdmin):
             return qs.filter(id__in=salespeople)  # Only show those Salespeople in the admin list
 
         return qs.none()  
-
-
-   
-    # def get_fieldsets(self, request, obj=None):
-    #     fieldsets = super().get_fieldsets(request, obj)
-    #     if obj:
-    #         fieldsets=super().get_fieldsets(request,obj)
-    #         modified=[]
-    #         for name,dict_ in fieldsets:
-    #             fields=dict_.get("fields",[])
-    #             if 'password' in fields:
-    #                 fields=tuple(f for f in fields if f!='password')
-    #             modified.append((name,{"fields":fields}))
-
-    #     if obj and obj == request.user and request.user.is_superuser:
-    #         # remove 'user_permissions' from all fieldsets
-    #         new_fieldsets = []
-    #         for name, opts in modified:
-    #             fields = opts.get('fields', [])
-    #             if 'user_permissions' in fields:
-    #                 fields = tuple(f for f in fields if f != 'user_permissions')
-    #             new_fieldsets.append((name, {**opts, 'fields': fields}))
-    #         return new_fieldsets
-
-    #     return fieldsets
 
 
     def get_fieldsets(self, request, obj=None):
@@ -143,34 +119,6 @@ class CustomUserAdmin(UserAdmin):
 
         return form
 
-    # def save_model(self, request, obj, form, change):
-    #     """
-    #     Automatically set created_by = logged-in salesperson when creating a new Referrer.
-    #     """
-    #     if not change:  # Only when creating, not updating
-    #         if request.user.user_type == "sale" and obj.user_type == "ref":
-    #             obj.created_by = request.user
-    #     super().save_model(request, obj, form, change)
-
-    # def save_model(self, request, obj, form, change):
-    #     """
-    #     Restrict Salesperson so they can only create Referrers.
-    #     Also ensure they cannot elevate privileges.
-    #     """
-    #     if not request.user.is_superuser and request.user.user_type == "sale":
-    #         # Force restrictions
-    #         obj.is_superuser = False
-    #         obj.is_staff = True  # stays False by default unless superuser sets
-    #         obj.groups.clear()    # Remove group assignments
-
-    #         # Salesperson can only create Referrers
-    #         if not change:  # only when creating new
-    #             if obj.user_type != "ref":
-    #                 raise PermissionError("Salesperson can only create Referrers.")
-    #             obj.created_by = request.user  # auto-assign creator
-
-    #     super().save_model(request, obj, form, change)
-
     def save_model(self, request, obj, form, change):
         """
         Automatically set created_by = logged-in salesperson when creating a new Referrer.
@@ -208,7 +156,7 @@ class CustomUserAdmin(UserAdmin):
 
 
 
-admin.site.register(CustomUser,CustomUserAdmin)
+admin_site.register(CustomUser,CustomUserAdmin)
 
 
 class ReferrerGroupForm(forms.ModelForm):
@@ -252,7 +200,7 @@ class ReferrerGroupAdmin(GroupAdmin):
 
 
 # unregister default and register custom
-admin.site.unregister(Group)
-admin.site.register(Group, ReferrerGroupAdmin)
+admin_site.unregister(Group)
+admin_site.register(Group, ReferrerGroupAdmin)
 
-admin.site.register(UserDevice)
+admin_site.register(UserDevice)

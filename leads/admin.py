@@ -5,6 +5,7 @@ User = get_user_model()
 from utils.logger import logging
 from accounts.choices import UserType
 from pipelines.models import PipelineStatus , Pipeline
+from Sale_Crm_webapp.admin import admin_site
 
 
 # Custom Admin filter for 'Assigned From' (Referrer)
@@ -121,6 +122,6 @@ class LeadsAdmin(admin.ModelAdmin):
     class Media:
         js = ('admin/js/lead_admin.js',)
 
-admin.site.register(Leads, LeadsAdmin)
+admin_site.register(Leads, LeadsAdmin)
 
 
