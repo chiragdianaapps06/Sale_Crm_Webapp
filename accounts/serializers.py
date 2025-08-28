@@ -7,7 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from utils.logger import logging
 from utils.generate_password import random_password_generator
 from .emails import send_account_credentials
-import random
+from .helper import generate_qr
 User=get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -48,10 +48,13 @@ class CreateUserSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             username=validated_data['email'].split('@')[0],
             password=validated_data['password'],
-            is_verified=True
+            is_verified=True,
         )
-
+            
         user.save()
+        if user.user_type=="sale":
+            generate_qr(user)
+        
         return user
 
 
@@ -97,7 +100,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ReferrerSerializer(serializers.ModelSerializer):
     business_info = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    business_info = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    location = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = User

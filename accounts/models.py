@@ -18,6 +18,8 @@ class CustomUser(AbsModel,AbstractUser):
     location=models.TextField(null=True,blank=True)
     is_verified=models.BooleanField(default=False)
     created_by = models.ForeignKey("self",    null=True,    blank=True,    on_delete=models.SET_NULL,    related_name="referrers")
+    qr_code = models.ImageField(upload_to="qr_codes/", blank=True, null=True)
+
     
     USERNAME_FIELD = 'email' 
     REQUIRED_FIELDS = ['username']
