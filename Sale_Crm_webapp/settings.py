@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+from datetime import timedelta
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,18 +30,27 @@ SECRET_KEY = 'django-insecure-3c$%74wi)jw^nbda&fri+0hhbh02h4otrzg*@7&!6r#62o6an!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost",
+    "127.0.0.1",
+    ".ngrok-free.app",]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'leads',
+    'pipelines',
+    'accounts',
+    'payments'
 ]
 
 MIDDLEWARE = [
@@ -54,7 +68,7 @@ ROOT_URLCONF = 'Sale_Crm_webapp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "Sale_Crm_webapp" / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,8 +88,12 @@ WSGI_APPLICATION = 'Sale_Crm_webapp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD':os.getenv('PASSWORD'),
+        'HOST':os.getenv('HOST'),
+        'PORT':os.getenv('PORT'),
     }
 }
 
@@ -88,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', "OPTIONS": {"min_length": 8}
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -104,19 +122,110 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
 USE_TZ = True
 
+AUTH_USER_MODEL='accounts.CustomUser'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60), 
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_BLACKLIST_ENABLED": True,
+}
+#Email configuration using smtp server
+EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST='smtp.gmail.com'
+EMAIL_USE_TLS=True
+EMAIL_PORT=587
+EMAIL_HOST_USER=os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD=os.getenv('EMAIL_HOST_PASSWORD')
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_RENDERER_CLASSES':[
+        'utils.renderers.CustomRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+
+}
+
+
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STATIC_URL = '/static/'
+
+# For development, this should be correct for Django to serve the files
+
+# If collecting static files, make sure you also have this
+# STATIC_ROOT = BASE_DIR / "static"
+
+
+# STATICFILES_DIRS = [BASE_DIR / "leads/static"]
+
+# If collecting static files, make sure you also have this
+# STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+
+
+import firebase_admin
+from firebase_admin import credentials
+
+# Construct the path to the Firebase service account file located in the static folder
+service_account_path = os.path.join(BASE_DIR,'media', 'service-account-file.json')
+
+# Initialize Firebase with the dynamically constructed path
+cred = credentials.Certificate(service_account_path)
+
+# Initialize Firebase
+firebase_admin.initialize_app(cred)
+
+# Now you can use Firebase in your application
+
+MEDIA_URL = '/media/'
+
+
+JAZZMIN_SETTINGS ={
+    "site_header" : "Jaidan Crm",
+    'site_title':'Jaidan Crm',
+    # "site_logo": "logo-transparent-png.png",
+    "site_brand": "Jaidan Crm",   
+    "welcome_sign": "Welcome to Jaidan Crm ",
+}
+
+
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Jaidan",
+    "site_header": "Jaidan",
+    "welcome_sign": "Log in to Jaidan Admin",
+    "login_logo": "images/logo.png", 
+    "login_logo_dark": "images/logo.png",  
+}
+
+LOGIN_URL = "/admin/"
+
