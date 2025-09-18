@@ -68,7 +68,7 @@ ROOT_URLCONF = 'Sale_Crm_webapp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "Sale_Crm_webapp" / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -176,10 +176,18 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STATIC_URL = '/static/'
 
 # For development, this should be correct for Django to serve the files
-STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # If collecting static files, make sure you also have this
 # STATIC_ROOT = BASE_DIR / "static"
+
+
+# STATICFILES_DIRS = [BASE_DIR / "leads/static"]
+
+# If collecting static files, make sure you also have this
+# STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 
 
@@ -207,3 +215,17 @@ JAZZMIN_SETTINGS ={
     "site_brand": "Jaidan Crm",   
     "welcome_sign": "Welcome to Jaidan Crm ",
 }
+
+
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Jaidan",
+    "site_header": "Jaidan",
+    "welcome_sign": "Log in to Jaidan Admin",
+    "login_logo": "images/logo.png", 
+    "login_logo_dark": "images/logo.png",  
+}
+
+LOGIN_URL = "/admin/"
+

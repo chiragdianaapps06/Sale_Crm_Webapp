@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from .models import Pipeline, PipelineStatus
 from leads.models import Leads
+from Sale_Crm_webapp.admin import admin_site
+
 User = get_user_model()
 from django.core.exceptions import ValidationError
 
@@ -99,5 +101,5 @@ class PipelineStatusAdmin(admin.ModelAdmin):
 
 
 # Register the models with the updated admin classes
-admin.site.register(Pipeline, PipelineAdmin)
-admin.site.register(PipelineStatus, PipelineStatusAdmin)
+admin_site.register(Pipeline, PipelineAdmin)
+admin_site.register(PipelineStatus, PipelineStatusAdmin)
