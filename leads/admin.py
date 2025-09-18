@@ -77,6 +77,7 @@ class LeadsAdmin(admin.ModelAdmin):
    
     list_display = ['title', 'email', 'description', 'assigned_from', 'assigned_to', 'lead_pipeline', 'status']
     # list_filter = [AssignedFromFilter,AssignedToFilter]
+    list_display_links = ['email','lead_pipeline']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

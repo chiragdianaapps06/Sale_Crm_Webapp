@@ -7,6 +7,8 @@ from django.contrib.auth.admin import GroupAdmin
 from django import forms
 from leads.models import Leads
 from .models import UserDevice
+from django.urls import reverse
+from django.utils.html import format_html
 from Sale_Crm_webapp.admin import admin_site
 
 CustomUser = get_user_model()
@@ -14,8 +16,60 @@ CustomUser = get_user_model()
 class CustomUserAdmin(UserAdmin):
 
 
-    list_display = ('username', 'email', 'is_staff', 'is_superuser','user_type','lead_id', 'lead_title','created_by')
+    list_display = ('username','email', 'is_staff', 'is_superuser','user_type','lead_id_link','lead_title_link','created_by_link')
     readonly_fields=['username','email','last_login','date_joined','created_by']
+    search_fields = ("username",'created_by__username','lead_title__title')
+    list_display_links = ['username','email','lead_id_link','lead_title_link','created_by_link'] 
+    
+
+    # @admin.display(description="Username")
+    # def username_link(self, obj):
+    #     url = reverse("admin:accounts_customuser_change", args=[obj.id])
+    #     return format_html('<a href="{}">{}</a>', url, obj.username)
+    
+    @admin.display(description="Lead ID")
+    def lead_id_link(self, obj):
+        if obj.user_type == 'sale':
+            lead = Leads.objects.filter(assigned_to=obj).first()
+        elif obj.user_type == 'ref':
+            lead = Leads.objects.filter(assigned_from=obj).first()
+        else:
+            lead = None
+
+        if lead:
+            url = reverse("admin:leads_leads_change", args=[lead.id])  
+            return format_html('<a href="{}">{}</a>', url, lead.id)
+        return "-"
+   
+    @admin.display(description="Created By")
+    def created_by_link(self, obj):
+        if obj.created_by:
+            url = reverse("admin:accounts_customuser_change", args=[obj.created_by.id])
+            return format_html('<a href="{}">{}</a>', url, obj.created_by.username)
+        return "-"
+
+
+    # clickable Lead Title
+    @admin.display(description="Lead Title")
+    def lead_title_link(self, obj):
+        if obj.user_type == 'sale':
+            lead = Leads.objects.filter(assigned_to=obj).first()
+        elif obj.user_type == 'ref':
+            lead = Leads.objects.filter(assigned_from=obj).first()
+        else:
+            lead = None
+
+        if lead:
+            url = reverse("admin:leads_leads_change", args=[lead.id])  
+            return format_html('<a href="{}">{}</a>', url, lead.title)
+        return "-"
+
+    # def get_list_display(self, request):
+
+    #     if not request.user.is_superuser and  request.user.user_type == "sale" or request.user.user_type == 'ref':
+    #         return  ('username', 'email', 'is_staff', 'is_superuser','user_type','lead_id_link','lead_title_link')
+    #     return super().get_list_display(request)
+
 
     def get_readonly_fields(self, request, obj = None):
         if obj:
@@ -41,7 +95,9 @@ class CustomUserAdmin(UserAdmin):
                 # Combine Referrers from leads with Referrers created by the current Salesperson (created_by)
                 referrers_assigned = qs.filter(id__in=referrers)  # Referrers assigned to the Salesperson via leads
                 referrers_created = qs.filter(created_by=request.user)  # Referrers created by the Salesperson
-                return referrers_assigned | referrers_created  # Combine both sets (OR condition)
+
+                # own = 
+                return referrers_assigned | referrers_created   # Combine both sets (OR condition)
 
             except Exception as e:
                 return qs.none()
@@ -69,7 +125,7 @@ class CustomUserAdmin(UserAdmin):
                 for name, opts in fieldsets:
                     fields = list(opts.get("fields", []))
                     # Remove restricted fields
-                    for f in ['is_superuser', 'groups', 'user_permissions', 'is_staff']:
+                    for f in ['is_superuser', 'groups', 'user_permissions', 'is_staff','password']:
                         if f in fields:
                             fields.remove(f)
                     new_fieldsets.append((name, {**opts, "fields": fields}))
@@ -203,4 +259,6 @@ class ReferrerGroupAdmin(GroupAdmin):
 admin_site.unregister(Group)
 admin_site.register(Group, ReferrerGroupAdmin)
 
-admin_site.register(UserDevice)
+admin.site.register(UserDevice)
+
+

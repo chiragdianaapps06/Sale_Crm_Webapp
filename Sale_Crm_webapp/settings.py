@@ -176,6 +176,11 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STATIC_URL = '/static/'
 
 # For development, this should be correct for Django to serve the files
+
+# If collecting static files, make sure you also have this
+# STATIC_ROOT = BASE_DIR / "static"
+
+
 # STATICFILES_DIRS = [BASE_DIR / "leads/static"]
 
 # If collecting static files, make sure you also have this
@@ -185,11 +190,12 @@ STATICFILES_DIRS = [
 ]
 
 
+
 import firebase_admin
 from firebase_admin import credentials
 
 # Construct the path to the Firebase service account file located in the static folder
-service_account_path = os.path.join(BASE_DIR, 'media', 'service-account-file.json')
+service_account_path = os.path.join(BASE_DIR,'media', 'service-account-file.json')
 
 # Initialize Firebase with the dynamically constructed path
 cred = credentials.Certificate(service_account_path)
@@ -200,7 +206,16 @@ firebase_admin.initialize_app(cred)
 # Now you can use Firebase in your application
 
 MEDIA_URL = '/media/'
-# STATIC_ROOT=os.path.join(BASE_DIR,'static')
+
+
+JAZZMIN_SETTINGS ={
+    "site_header" : "Jaidan Crm",
+    'site_title':'Jaidan Crm',
+    # "site_logo": "logo-transparent-png.png",
+    "site_brand": "Jaidan Crm",   
+    "welcome_sign": "Welcome to Jaidan Crm ",
+}
+
 
 
 
@@ -213,3 +228,4 @@ JAZZMIN_SETTINGS = {
 }
 
 LOGIN_URL = "/admin/"
+
